@@ -7,6 +7,19 @@
 
 Готовый установщик: [Releases](https://github.com/goderfly/radio-record-windows-app/releases) (скачивается без входа) или [Artifacts последнего прогона сборки](https://github.com/goderfly/radio-record-windows-app/actions/workflows/build.yml) (нужен вход в GitHub).
 
+## Скриншоты
+
+Оба кадра — не нарисованные макеты, а реальные снимки работающего окна из smoke-прогона.
+
+![Тёмная тема](docs/screenshot-dark.png)
+
+<details>
+<summary>Светлая тема</summary>
+
+![Светлая тема](docs/screenshot-light.png)
+
+</details>
+
 ## Возможности
 
 - **Плеер** — два синхронных `audio`-элемента дают мягкий кроссфейд при переключении каналов, плюс буферизация, авто-переподключение и ручной ретрай.
@@ -52,6 +65,22 @@ $env:RECORD_MINI_SMOKE="C:\Windows\Temp\rm-smoke"; npm run smoke
 ```
 
 Результат — 52 проверки, файлы `report.json`, `layout.txt` (ASCII-карта панелей), `smoke.png` и `smoke-light.png`.
+
+`smoke.png` и `smoke-light.png` — те самые кадры, что лежат в `docs/` и показаны в README. После изменения интерфейса перезалить их стоит так:
+
+```bash
+$env:RECORD_MINI_SMOKE="C:\Windows\Temp\rm-smoke"; npm run smoke
+Copy-Item $env:RECORD_MINI_SMOKE\smoke.png docs\screenshot-dark.png
+Copy-Item $env:RECORD_MINI_SMOKE\smoke-light.png docs\screenshot-light.png
+```
+
+Пустой или однотонный кадр проходит проверку размера, поэтому кадр стоит убедить содержимым, а не наличием файла:
+
+```bash
+node tools/inspect-png.mjs docs\screenshot-dark.png
+```
+
+Скрипт распаковывает PNG и печатает число различных цветов, долю доминирующего цвета и среднюю яркость: плоский кадр даёт единицы цветов и одну моду. Размер 2240×1402 — это device-пиксели окна на HiDPI, GitHub масштабирует сам.
 
 ## Сборка .exe в CI
 
