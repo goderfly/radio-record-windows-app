@@ -943,46 +943,6 @@ export async function runSmoke(win: BrowserWindow): Promise<void> {
     const audit = await auditContrast(win);
     add("Every visible text run meets WCAG AA (dark)", audit.failing === 0, describeAudit(audit));
 
-    // The sort switch ("По алфавиту" / "По жанру") was the dimmest thing in the
-    // app, so assert its steps explicitly rather than trusting that the sweep
-    // happens to walk it: the idle label must be legible, the selected one
-    // clearly brighter still, and the track recessed behind the page.
-    const sort = (await win.webContents.executeJavaScript(`(() => {
-      const chan = (c) => {
-        const m = c.match(/rgba?\\(([^)]+)\\)/);
-        if (!m) return null;
-        const p = m[1].split(',').map((n) => parseFloat(n));
-        const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
-        return 0.2126 * f(p[0]) + 0.7152 * f(p[1]) + 0.0722 * f(p[2]);
-      };
-      // The scroll box itself is transparent; the page colour is the first
-      // opaque backdrop above it.
-      const page = (() => {
-        for (let n = document.querySelector('.app__content'); n; n = n.parentElement) {
-          const m = getComputedStyle(n).backgroundColor.match(/rgba?\\(([^)]+)\\)/);
-          if (m && parseFloat(m[1].split(',')[3] ?? '1') > 0.5) return chan(getComputedStyle(n).backgroundColor) || 0;
-        }
-        return 0;
-      })();
-      const box = document.querySelector('.segmented');
-      const off = box && box.querySelector('button[aria-pressed="false"]');
-      const on = box && box.querySelector('button[aria-pressed="true"]');
-      return {
-        labels: off ? off.textContent.trim() + ' / ' + on.textContent.trim() : 'none',
-        off: off ? chan(getComputedStyle(off).color) : 0,
-        on: on ? chan(getComputedStyle(on).color) : 0,
-        track: box ? chan(getComputedStyle(box).backgroundColor) : 0,
-        app: page,
-      };
-    })()`)) as { labels: string; off: number; on: number; track: number; app: number };
-
-    add(
-      "Sort switch is legible in the dark theme",
-      // 0.30 luminance is roughly where the old #7a7a7a used to sit (0.19).
-      sort.off >= 0.3 && sort.on > sort.off * 1.8 && sort.track < sort.app,
-      `"${sort.labels}": idle ${sort.off.toFixed(3)}, selected ${sort.on.toFixed(3)}, track ${sort.track.toFixed(3)} vs page ${sort.app.toFixed(3)}`,
-    );
-
     add(
       "Text is not clipped",
       Number(visuals["truncated"]) === 0,
@@ -1344,6 +1304,49 @@ export async function runSmoke(win: BrowserWindow): Promise<void> {
         `smoke-settings.png (${(settingsPng.length / 1024).toFixed(0)} KB), ` +
           `title "${dialog.title}", ${dialog.settings} settings, ${dialog.switches} controls`,
       );
+
+      // The segmented control's idle labels were the dimmest text in the app, so
+      // its steps are asserted explicitly rather than left to the sweep: idle
+      // legible, selected clearly brighter, track recessed behind the page. It
+      // lives here now that the toolbar's sort switch is gone - quality and
+      // theme are the last two segmented groups.
+      const seg = (await win.webContents.executeJavaScript(`(() => {
+        const chan = (c) => {
+          const m = c.match(/rgba?\\(([^)]+)\\)/);
+          if (!m) return null;
+          const p = m[1].split(',').map((n) => parseFloat(n));
+          const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+          return 0.2126 * f(p[0]) + 0.7152 * f(p[1]) + 0.0722 * f(p[2]);
+        };
+        const page = (() => {
+          for (let n = document.querySelector('.dialog'); n; n = n.parentElement) {
+            const m = getComputedStyle(n).backgroundColor.match(/rgba?\\(([^)]+)\\)/);
+            if (m && parseFloat(m[1].split(',')[3] ?? '1') > 0.5) return chan(getComputedStyle(n).backgroundColor) || 0;
+          }
+          return 0;
+        })();
+        const boxes = document.querySelectorAll('.dialog .segmented');
+        const box = boxes[0];
+        const off = box && box.querySelector('button[aria-pressed="false"]');
+        const on = box && box.querySelector('button[aria-pressed="true"]');
+        return {
+          groups: boxes.length,
+          labels: off && on ? off.textContent.trim() + ' / ' + on.textContent.trim() : 'none',
+          off: off ? chan(getComputedStyle(off).color) : 0,
+          on: on ? chan(getComputedStyle(on).color) : 0,
+          track: box ? chan(getComputedStyle(box).backgroundColor) : 0,
+          app: page,
+        };
+      })()`)) as { groups: number; labels: string; off: number; on: number; track: number; app: number };
+
+      add(
+        "Segmented control is legible in the dark theme",
+        // 0.30 luminance is roughly where the old #7a7a7a used to sit (0.19).
+        seg.groups >= 2 && seg.off >= 0.3 && seg.on > seg.off * 1.8 && seg.track < seg.app,
+        `${seg.groups} groups, "${seg.labels}": idle ${seg.off.toFixed(3)}, ` +
+          `selected ${seg.on.toFixed(3)}, track ${seg.track.toFixed(3)} vs page ${seg.app.toFixed(3)}`,
+      );
+
       win.webContents.sendInputEvent({ type: "keyDown", keyCode: "Escape" });
       await sleep(500);
       const stillOpen = (await win.webContents.executeJavaScript(

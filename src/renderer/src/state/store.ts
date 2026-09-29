@@ -11,7 +11,6 @@ import { resolveBitrate } from "../lib/format";
 import { scoreStation } from "../lib/fuzzy";
 
 export type ViewId = "channels" | "favorites" | "recent" | "history";
-export type SortId = "site" | "title" | "genre";
 
 export interface Toast {
   id: number;
@@ -33,7 +32,6 @@ interface AppState {
   view: ViewId;
   query: string;
   genreFilter: number | null;
-  sort: SortId;
   maximized: boolean;
   expandedPlayer: boolean;
   settingsOpen: boolean;
@@ -85,7 +83,6 @@ interface AppActions {
   setView(view: ViewId): void;
   setQuery(query: string): void;
   setGenreFilter(id: number | null): void;
-  setSort(sort: SortId): void;
   toggleFavorite(prefix: string): Promise<void>;
   setExpanded(open: boolean): void;
   setSettingsOpen(open: boolean): void;
@@ -213,7 +210,6 @@ export const useStore = create<Store>((set, get) => ({
   view: "channels",
   query: "",
   genreFilter: null,
-  sort: "site",
   maximized: false,
   expandedPlayer: false,
   settingsOpen: false,
@@ -426,7 +422,6 @@ export const useStore = create<Store>((set, get) => ({
   setView: (view) => set({ view, expandedPlayer: false }),
   setQuery: (query) => set({ query }),
   setGenreFilter: (genreFilter) => set({ genreFilter }),
-  setSort: (sort) => set({ sort }),
   setExpanded: (expandedPlayer) => set({ expandedPlayer }),
   setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -719,20 +714,6 @@ export function visibleStations(args: {
   }
 
   return list;
-}
-
-export function sortStations(list: Station[], sort: SortId): Station[] {
-  const copy = [...list];
-  if (sort === "title") return copy.sort((a, b) => a.title.localeCompare(b.title, "ru"));
-  if (sort === "genre") {
-    return copy.sort((a, b) => {
-      const ga = a.genres[0]?.name ?? "";
-      const gb = b.genres[0]?.name ?? "";
-      const cmp = ga.localeCompare(gb, "ru");
-      return cmp !== 0 ? cmp : a.title.localeCompare(b.title, "ru");
-    });
-  }
-  return copy;
 }
 
 function firstStation(stations: Station[], favorites: string[]): Station | null {

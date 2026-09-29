@@ -1,7 +1,7 @@
 {
   "name": "radio-record-windows-app",
   "productName": "Radio Record Windows App",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Radio Record Windows App — десктопный плеер радиостанций Record Dance Radio",
   "main": "./out/main/index.js",
   "license": "MIT",

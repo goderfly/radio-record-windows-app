@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, X, RefreshCw, Radio, Heart, AlertTriangle } from "lucide-react";
-import { useStore, visibleStations, sortStations, type SortId } from "../state/store";
+import { useStore, visibleStations } from "../state/store";
 import { plural } from "../lib/format";
 import { StationCard } from "./StationCard";
 
@@ -17,17 +17,18 @@ export function StationGrid({ footer }: { footer?: React.ReactNode }): JSX.Eleme
   const query = useStore((s) => s.query);
   const setQuery = useStore((s) => s.setQuery);
   const genreFilter = useStore((s) => s.genreFilter);
-  const sort = useStore((s) => s.sort);
-  const setSort = useStore((s) => s.setSort);
   const genres = useStore((s) => s.genres);
   const settings = useStore((s) => s.settings);
   const catalogState = useStore((s) => s.catalogState);
   const refreshCatalog = useStore((s) => s.refreshCatalog);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Left in the site's own order. The catalog it serves is already sorted by
+  // name, which is why the "С сайта" and "По алфавиту" tabs produced identical
+  // grids; sorting again here would only be a second guess at the same answer.
   const filtered = useMemo(
-    () => sortStations(visibleStations({ stations, view, query, genreFilter, settings }), sort),
-    [stations, view, query, genreFilter, sort, settings],
+    () => visibleStations({ stations, view, query, genreFilter, settings }),
+    [stations, view, query, genreFilter, settings],
   );
 
   const activeGenre = genres.find((g) => g.id === genreFilter) ?? null;
@@ -59,27 +60,6 @@ export function StationGrid({ footer }: { footer?: React.ReactNode }): JSX.Eleme
         </div>
 
         <div className="toolbar__spacer" />
-
-        {view === "channels" ? (
-          <div className="segmented" role="group" aria-label="Сортировка">
-            {(
-              [
-                ["site", "С сайта"],
-                ["title", "По алфавиту"],
-                ["genre", "По жанру"],
-              ] as Array<[SortId, string]>
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                onClick={() => setSort(id)}
-                aria-pressed={sort === id}
-                type="button"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        ) : null}
 
         <div className="search">
           <span className="search__icon">
