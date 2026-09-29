@@ -102,8 +102,13 @@ jobs:
           name: Record-Mini-${{ github.sha }}
           path: dist
 
+      # gh is preinstalled on GitHub runners, so the release needs no
+      # third-party action and no extra trust in the dependency graph.
       - name: Publish release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.exe
-          generate_release_notes: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "Record Mini ${GITHUB_REF_NAME}" \
+            --generate-notes \
+            dist/*.exe
