@@ -568,6 +568,75 @@ export async function runSmoke(win: BrowserWindow): Promise<void> {
           jumped.currentIndex === 2 && jumped.currentTitle === rowClick.wanted && jumped.sub.length > 0,
           `row 2 "${rowClick.wanted}" -> highlighted row ${jumped.currentIndex} "${jumped.currentTitle}", nowbar "${jumped.sub}"`,
         );
+
+        // Highlighting a row is not the same as playing it, which is the bug this
+        // guards: the excerpt has to be loaded *and* say so in the interface.
+        await sleep(900);
+        const excerpt = (await win.webContents.executeJavaScript(`(() => {
+          const rows = Array.from(document.querySelectorAll('.track'));
+          return {
+            marked: rows.findIndex((r) => !!r.querySelector('.chip--live')),
+            markedLabel: (rows.find((r) => r.querySelector('.chip--live'))?.querySelector('.chip--live')?.textContent || '').trim(),
+            liveChip: (document.querySelector('.live-chip')?.textContent || '').trim(),
+            signal: !!document.querySelector('.nowbar__signal'),
+          };
+        })()`)) as {
+          marked: number;
+          markedLabel: string;
+          liveChip: string;
+          signal: boolean;
+        };
+
+        add(
+          "A picked log row loads its excerpt and says so",
+          excerpt.marked === 2 && excerpt.markedLabel === "Фрагмент" && /Фрагмент/.test(excerpt.liveChip),
+          `row ${excerpt.marked} marked "${excerpt.markedLabel}", nowbar chip "${excerpt.liveChip}"`,
+        );
+
+        // A clip is a file, not a stream: a throughput readout would be a lie.
+        add(
+          "The signal meter is hidden while an excerpt plays",
+          !excerpt.signal,
+          `signal indicator present: ${excerpt.signal}`,
+        );
+
+        // And the way back out has to work from that state.
+        const backHit = (await win.webContents.executeJavaScript(`(() => {
+          const btn = document.querySelector('.live-chip');
+          if (!btn) return null;
+          const r = btn.getBoundingClientRect();
+          return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
+        })()`)) as { x: number; y: number } | null;
+
+        if (backHit) {
+          for (const type of ["mouseDown", "mouseUp"] as const) {
+            win.webContents.sendInputEvent({
+              type,
+              x: backHit.x,
+              y: backHit.y,
+              button: "left",
+              clickCount: 1,
+            });
+          }
+          await sleep(1200);
+          const back = (await win.webContents.executeJavaScript(`(() => {
+            const rows = Array.from(document.querySelectorAll('.track'));
+            return {
+              marked: rows.findIndex((r) => !!r.querySelector('.chip--live')),
+              currentIndex: rows.findIndex((r) => r.classList.contains('track--current')),
+              liveChip: (document.querySelector('.live-chip')?.textContent || '').trim(),
+              signal: !!document.querySelector('.nowbar__signal'),
+            };
+          })()`)) as { marked: number; currentIndex: number; liveChip: string; signal: boolean };
+
+          add(
+            "The back-to-live chip returns to the stream",
+            back.marked === -1 && back.currentIndex === 0 && back.signal,
+            `marked row ${back.marked}, current row ${back.currentIndex}, chip "${back.liveChip}", signal back: ${back.signal}`,
+          );
+        } else {
+          add("The back-to-live chip returns to the stream", false, "the chip was not on screen to click");
+        }
       } else {
         add("Clicking a log row loads that track", false, "row was not on screen to click");
       }
@@ -963,6 +1032,54 @@ export async function runSmoke(win: BrowserWindow): Promise<void> {
       );
     } catch (err) {
       add("Stream proxy serves AAC", false, `error: ${String(err)}`);
+    }
+
+    // --- and does the preview path really deliver an audible clip? ---
+    // Resolved through the same bridge the renderer uses, so this covers
+    // renderer -> IPC -> host allowlist -> Apple CDN in one hop.
+    const preview = (await win.webContents.executeJavaScript(
+      `(async () => {
+        const history = await window.recordMini.onAir.history(${station.id});
+        const withClip = history.find((t) => t.previewUrl);
+        if (!withClip) return { none: true };
+        const proxied = await window.recordMini.player.previewUrl(withClip.previewUrl);
+        return { none: false, song: withClip.song, proxied, total: history.length };
+      })()`,
+    )) as { none: boolean; song?: string; proxied?: string; total?: number };
+
+    if (preview.none) {
+      add("Preview proxy serves the track excerpt", false, "the log had no track with a preview");
+    } else {
+      try {
+        const res = await fetch(preview.proxied!, {
+          headers: { range: "bytes=0-65535" },
+        });
+        const buf = Buffer.from(await res.arrayBuffer());
+        // An M4A starts with a 4-byte box size and then the 'ftyp' type.
+        const isM4a = buf.length > 8 && buf.subarray(4, 8).toString("latin1") === "ftyp";
+        add(
+          "Preview proxy serves the track excerpt",
+          isM4a && buf.byteLength > 16 * 1024,
+          `${buf.byteLength} bytes, status ${res.status}, content-type=${res.headers.get("content-type")}, M4A box: ${isM4a} ("${preview.song}")`,
+        );
+      } catch (err) {
+        add("Preview proxy serves the track excerpt", false, `error: ${String(err)}`);
+      }
+
+      // The allowlist is the only thing standing between a loopback server and
+      // an open relay, so it gets a check of its own.
+      try {
+        const rejected = await fetch(
+          `http://127.0.0.1:${new URL(preview.proxied!).port}/preview?u=${encodeURIComponent("http://127.0.0.1/secret")}`,
+        );
+        add(
+          "Preview proxy refuses hosts outside the allowlist",
+          rejected.status === 403,
+          `non-allowlisted upstream returned ${rejected.status}`,
+        );
+      } catch (err) {
+        add("Preview proxy refuses hosts outside the allowlist", false, `error: ${String(err)}`);
+      }
     }
 
     // Now-playing metadata from the public history endpoint.
