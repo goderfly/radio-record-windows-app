@@ -1,10 +1,11 @@
-# Record Mini
+# Radio Record Windows App
 
-[![Build](https://github.com/goderfly/record-mini/actions/workflows/build.yml/badge.svg)](https://github.com/goderfly/record-mini/actions/workflows/build.yml)
+[![Build](https://github.com/goderfly/radio-record-windows-app/actions/workflows/build.yml/badge.svg)](https://github.com/goderfly/radio-record-windows-app/actions/workflows/build.yml)
 
 Десктопный плеер радиостанций [radiorecord.ru](https://radiorecord.ru) на Electron + React + TypeScript.
+В интерфейсе приложение называется коротко — **RECORD**.
 
-Готовый `.exe` — в [Artifacts последнего прогона сборки](https://github.com/goderfly/record-mini/actions/workflows/build.yml) (нужен вход в GitHub) или в Releases, если тегнуть `v1.0.0`.
+Готовый установщик: [Releases](https://github.com/goderfly/radio-record-windows-app/releases) (скачивается без входа) или [Artifacts последнего прогона сборки](https://github.com/goderfly/radio-record-windows-app/actions/workflows/build.yml) (нужен вход в GitHub).
 
 ## Возможности
 

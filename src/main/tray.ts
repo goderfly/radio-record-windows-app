@@ -5,6 +5,12 @@ import { getMainWindow, showMainWindow, toggleMainWindow, quitApp } from "./wind
 
 type CommandHandler = (command: string, payload?: unknown) => void;
 
+/**
+ * Short name for the places with no room for the full one: the tray menu
+ * header and the tooltip, both of which are read at a glance.
+ */
+const APP_SHORT_NAME = "RECORD";
+
 let tray: Tray | null = null;
 let current: TrayMenuPayload = {
   playing: false,
@@ -27,7 +33,7 @@ function buildMenu(payload: TrayMenuPayload): Menu {
   };
 
   const items: MenuItemConstructorOptions[] = [
-    { label: "Record Mini", enabled: false },
+    { label: APP_SHORT_NAME, enabled: false },
     { type: "separator" },
     {
       label: payload.stationTitle ?? "Ничего не играет",
@@ -83,7 +89,7 @@ export function createTray(onCommand: CommandHandler): void {
   if (tray) return;
 
   tray = new Tray(icon("tray.png"));
-  tray.setToolTip("Record Mini — пауза");
+  tray.setToolTip(`${APP_SHORT_NAME} — пауза`);
   tray.setContextMenu(buildMenu(current));
   tray.on("click", () => toggleMainWindow());
   tray.on("double-click", () => showMainWindow());
@@ -99,7 +105,7 @@ export function updateTray(payload: Partial<TrayMenuPayload>): void {
   if (!tray) return;
   tray.setContextMenu(buildMenu(current));
   const label = current.trackLabel ? `${current.stationTitle ?? ""} — ${current.trackLabel}` : current.stationTitle;
-  tray.setToolTip(label ? `Record Mini: ${label}` : "Record Mini");
+  tray.setToolTip(label ? `${APP_SHORT_NAME}: ${label}` : APP_SHORT_NAME);
 }
 
 export function setTrayPlaying(playing: boolean): void {

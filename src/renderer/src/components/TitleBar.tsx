@@ -18,7 +18,7 @@ export function TitleBar(): JSX.Element {
     <header className="titlebar">
       <div className="titlebar__brand">
         <RecordMark className="titlebar__logo" />
-        <span>Record Mini</span>
+        <span>RECORD</span>
       </div>
 
       <span className="titlebar__sep" aria-hidden="true" />

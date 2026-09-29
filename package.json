@@ -1,12 +1,12 @@
 {
-  "name": "record-mini",
-  "productName": "Record Mini",
+  "name": "radio-record-windows-app",
+  "productName": "Radio Record Windows App",
   "version": "1.0.0",
-  "description": "Record Mini — десктопный плеер радиостанций Record Dance Radio",
+  "description": "Radio Record Windows App — десктопный плеер радиостанций Record Dance Radio",
   "main": "./out/main/index.js",
   "license": "MIT",
   "private": true,
-  "author": "Record Mini",
+  "author": "Radio Record Windows App",
   "homepage": "https://radiorecord.ru",
   "scripts": {
     "dev": "electron-vite dev",
@@ -40,7 +40,7 @@
   },
   "build": {
     "appId": "ru.radiorecord.mini",
-    "productName": "Record Mini",
+    "productName": "Radio Record Windows App",
     "directories": { "output": "release" },
     "files": ["out/**/*", "resources/**/*"],
     "win": { "target": ["nsis", "portable"] },
@@ -48,7 +48,7 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "Record Mini"
+      "shortcutName": "RECORD"
     },
     "mac": { "target": ["dmg"], "category": "public.app-category.music" },
     "linux": { "target": ["AppImage"], "category": "AudioVideo" }

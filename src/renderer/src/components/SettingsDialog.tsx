@@ -186,7 +186,10 @@ export function SettingsDialog(): JSX.Element | null {
           </Section>
 
           <Section title="О приложении">
-            <Setting label="Record Mini" hint={`Версия ${version || "1.0.0"} · данные: radiorecord.ru`}>
+            <Setting
+              label="Radio Record Windows App"
+              hint={`Версия ${version || "1.0.0"} · данные: radiorecord.ru`}
+            >
               <button
                 className="btn btn--outline"
                 onClick={() => void window.recordMini.system.openExternal("https://radiorecord.ru")}

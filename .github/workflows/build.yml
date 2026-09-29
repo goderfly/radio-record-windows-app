@@ -88,7 +88,7 @@ jobs:
       - name: Upload .exe
         uses: actions/upload-artifact@v4
         with:
-          name: Record-Mini-windows-x64
+          name: Radio-Record-Windows-App-x64
           path: dist/*.exe
           if-no-files-found: error
 
@@ -105,7 +105,7 @@ jobs:
       - name: Download the .exe
         uses: actions/download-artifact@v4
         with:
-          name: Record-Mini-windows-x64
+          name: Radio-Record-Windows-App-x64
           path: dist
 
       # gh is preinstalled on GitHub runners, so the release needs no
@@ -115,6 +115,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${GITHUB_REF_NAME}" \
-            --title "Record Mini ${GITHUB_REF_NAME}" \
+            --title "Radio Record Windows App ${GITHUB_REF_NAME}" \
             --generate-notes \
             dist/*.exe
