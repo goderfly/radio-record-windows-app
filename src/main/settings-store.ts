@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync, renameSync, mkdirSync, existsSync } from "
 import { join, dirname } from "node:path";
 import type { PersistedSettings, Settings } from "@shared/types";
 
-const SETTINGS_VERSION = 1;
+const SETTINGS_VERSION = 2;
 const FILE = "settings.json";
 
 export const DEFAULT_SETTINGS: PersistedSettings = {
@@ -18,7 +18,9 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   closeToTray: true,
   launchOnStartup: false,
   showTray: true,
-  notificationsOnTrackChange: true,
+  // Off by default: a track-change toast on every song is the kind of thing
+  // people switch off the first time they hear it. Settings turns it on.
+  notificationsOnTrackChange: false,
   globalShortcutsEnabled: true,
   globalShortcuts: {
     playPause: "CommandOrControl+Shift+P",
@@ -95,11 +97,31 @@ function readFromDisk(): PersistedSettings {
   try {
     const p = resolvePath();
     if (!existsSync(p)) return { ...DEFAULT_SETTINGS };
-    return sanitise(JSON.parse(readFileSync(p, "utf8")));
+    return sanitise(migrate(JSON.parse(readFileSync(p, "utf8"))));
   } catch (err) {
     console.warn("[settings] unreadable, falling back to defaults:", err);
     return { ...DEFAULT_SETTINGS };
   }
+}
+
+/**
+ * Brings a file written by an older build up to the current shape.
+ *
+ * The stored `version` used to be written but never read, so a build had no
+ * way to notice an older file and nothing could ever migrate. Each step is
+ * keyed on the version that introduced it, so running it twice is a no-op.
+ */
+function migrate(stored: Partial<PersistedSettings> & { version?: number }): Partial<PersistedSettings> {
+  const version = typeof stored.version === "number" ? stored.version : 0;
+  if (version >= SETTINGS_VERSION) return stored;
+
+  const next: Partial<PersistedSettings> = { ...stored };
+  // v2: the notification default flipped to off. A stored "true" can only have
+  // come from the old default, never from a choice, so it is reset rather than
+  // preserved - keeping it would leave every existing install notifying.
+  if (version < 2) next.notificationsOnTrackChange = false;
+
+  return next;
 }
 
 function flush(): void {

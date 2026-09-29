@@ -55,6 +55,11 @@ jobs:
       - name: Check icons
         run: node tools/check-icons.mjs
 
+      # The toast header is only right while build.appId, APP_ID and the
+      # shortcut name agree; a drift there degrades silently, so gate it.
+      - name: Check app identity
+        run: node tools/check-app-identity.mjs
+
       # Regenerating rasterises the brand mark through Chromium. The runner has
       # no GPU and no interactive session, which Electron sometimes cannot
       # start from — and the committed icons are authoritative anyway, so this

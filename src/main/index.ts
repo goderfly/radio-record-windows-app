@@ -5,12 +5,15 @@ import { registerAppScheme, serveRendererFrom } from "./app-protocol";
 import { initIpc, emitStreamStatus, applySystemIntegrations, ensureTrayPresent } from "./ipc";
 import { settings } from "./settings-store";
 import { unregisterShortcuts } from "./shortcuts";
+import { APP_ID } from "./app-identity";
 import { join } from "node:path";
 
 /** Honour `--hidden` (used by the autostart entry) even before settings are read. */
 const launchedHidden = process.argv.includes("--hidden");
 
 // Must run before `app.whenReady()`.
+// Keeps the toast header off the executable's name; see ./app-identity.
+app.setAppUserModelId(APP_ID);
 registerAppScheme();
 
 // A second launch should surface the existing window instead of a second copy.
