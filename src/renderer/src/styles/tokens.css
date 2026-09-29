@@ -1,0 +1,154 @@
+/**
+ * Design tokens lifted from radiorecord.ru's own stylesheet
+ * (--brand-accent, --neutrals-*, --text-night-* and the brand gradients),
+ * extended with the spacing/radius/motion scales a desktop app needs.
+ */
+
+:root {
+  /* ---- brand (radiorecord.ru) ---- */
+  --brand-accent: #fc581f;
+  --brand-accent-2: #48cd9d;
+  --brand-violet: #d020d5;
+  --color-accent: #ff6a00;
+
+  --brand-gradient: linear-gradient(100deg, #ff4e10 42.63%, #e8a700 100%);
+  --brand-gradient-hover: linear-gradient(100deg, #ec4911 42.63%, #e8a700 100%);
+  --brand-gradient-violet: linear-gradient(100deg, #ff4e10 42.63%, #d020d5 100%);
+
+  /* ---- neutrals (radiorecord.ru) ---- */
+  --n-900: #141414;
+  --n-850: #1a1a1a;
+  --n-800: #242424;
+  --n-700: #2a2a2a;
+  --n-600: #3d3d3d;
+  --n-500: #5b5b5b;
+  --n-400: #7a7a7a;
+  --n-300: #a8a8a8;
+  --n-200: #dbdbdb;
+  --n-100: #ebebeb;
+  --n-050: #f5f4f4;
+  --n-025: #fafafa;
+
+  /* ---- semantic surfaces (dark) ----
+     The site's own --n-900/850/800 sit three steps apart, which left a card
+     only 1.06:1 away from the page behind it. These widen each step a little
+     without turning the window into a set of hard outlines. */
+  --bg-app: #101010;
+  --bg-elevated: #1b1b1b;
+  --bg-raised: #262626;
+  --bg-overlay: rgba(16, 16, 16, 0.72);
+  --bg-hover: rgba(255, 255, 255, 0.07);
+  --bg-active: rgba(255, 255, 255, 0.12);
+  --bg-sunken: #080808;
+  /* Channel logos ship as white SVG, so their plate is dark in both themes. */
+  --logo-plate: #1c1c1c;
+
+  /* ---- semantic text (dark) ----
+     The site's own --n-400 (#7a7a7a) tops out at 4.3:1 on --bg-app and falls to
+     3.6:1 on --bg-sunken, so every run of supporting copy — card blurbs, genre
+     chips, sidebar counters, the sort switch — inherited a grey below WCAG AA.
+     These steps clear 4.5:1 on the darkest surface the UI actually paints on,
+     while staying far enough apart to read as three distinct levels. */
+  --text-primary: var(--n-100); /* #ebebeb — 15.5:1 */
+  --text-secondary: #c0c0c0; /* 10.1:1 */
+  --text-tertiary: #969696; /* 6.2:1 */
+  --text-disabled: #6b6b6b; /* 3.5:1 — disabled controls are exempt from AA */
+  --text-on-accent: #1a1005;
+  /* Accent used as *text*. The site's #fc581f clears 3:1 as a graphic on white
+     but only reaches 2.7:1 at 12px, so the light theme deepens it. */
+  --accent-text: var(--brand-accent);
+  --status-error-text: #ff8b84;
+
+  /* ---- lines ---- */
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-default: rgba(255, 255, 255, 0.16);
+  --border-strong: rgba(255, 255, 255, 0.26);
+  --border-focus: var(--brand-accent);
+
+  /* ---- status ---- */
+  --status-live: var(--brand-accent-2);
+  --status-error: #eb281d;
+  --status-warning: #e8a700;
+
+  /* ---- spacing scale (4px base) ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* ---- radii ---- */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  /* ---- typography ---- */
+  --font-ui:
+    "Roboto", "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial,
+    sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Cascadia Mono", Consolas, monospace;
+
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 26px;
+  --fs-3xl: 34px;
+  --fs-4xl: 48px;
+
+  --lh-tight: 1.2;
+  --lh-normal: 1.45;
+
+  /* ---- elevation ---- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --ring-focus: 0 0 0 2px var(--bg-app), 0 0 0 4px var(--border-focus);
+
+  /* ---- motion ---- */
+  --dur-fast: 110ms;
+  --dur-base: 170ms;
+  --dur-slow: 280ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ---- layout ---- */
+  --titlebar-h: 42px;
+  --sidebar-w: 248px;
+  --nowbar-h: 92px;
+  --card-min: 172px;
+}
+
+/* Light theme: same brand, inverted surfaces, per the site's --text-day-* tokens. */
+:root[data-theme="light"] {
+  --bg-app: #ffffff;
+  --bg-elevated: #fafafa;
+  --bg-raised: #f5f4f4;
+  --bg-overlay: rgba(255, 255, 255, 0.8);
+  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-active: rgba(0, 0, 0, 0.08);
+  --bg-sunken: #f0efef;
+  --logo-plate: #1c1c1c;
+
+  --text-primary: #2a2a2a; /* 14.4:1 */
+  --text-secondary: #5b5b5b; /* 6.8:1 */
+  --text-tertiary: #6b6b6b; /* 5.3:1 — the site's #7a7a7a only reaches 4.3:1 */
+  --text-disabled: #8f8f8f; /* 3.2:1 — disabled controls are exempt from AA */
+  --text-on-accent: #ffffff;
+  --accent-text: #b33809; /* 5.1:1 on the tinted chip in this theme */
+  --status-error-text: #a81f18; /* 5.7:1 on the tinted adult badge */
+
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-default: rgba(0, 0, 0, 0.12);
+  --border-strong: rgba(0, 0, 0, 0.22);
+}

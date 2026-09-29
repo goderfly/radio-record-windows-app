@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build output
+out/
+release/
+dist/
+
+# incremental TypeScript state
+*.tsbuildinfo
+
+# local env / secrets
+.env
+.env.local
+.env.*.local
+
+# logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

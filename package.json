@@ -1,0 +1,56 @@
+{
+  "name": "record-mini",
+  "productName": "Record Mini",
+  "version": "1.0.0",
+  "description": "Record Mini — десктопный плеер радиостанций Record Dance Radio",
+  "main": "./out/main/index.js",
+  "license": "MIT",
+  "private": true,
+  "author": "Record Mini",
+  "homepage": "https://radiorecord.ru",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "start": "electron-vite preview",
+    "build": "electron-vite build",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "icons": "electron tools/gen-icons.mjs && node tools/check-icons.mjs",
+    "catalog": "node tools/fetch-catalog.mjs",
+    "smoke": "electron-vite build && electron .",
+    "dist": "npm run icons && npm run typecheck && electron-vite build && electron-builder"
+  },
+  "dependencies": {
+    "hls.js": "^1.5.18",
+    "lucide-react": "^0.469.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^3.1.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  },
+  "build": {
+    "appId": "ru.radiorecord.mini",
+    "productName": "Record Mini",
+    "directories": { "output": "release" },
+    "files": ["out/**/*", "resources/**/*"],
+    "win": { "target": ["nsis", "portable"] },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Record Mini"
+    },
+    "mac": { "target": ["dmg"], "category": "public.app-category.music" },
+    "linux": { "target": ["AppImage"], "category": "AudioVideo" }
+  }
+}

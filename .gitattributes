@@ -1,0 +1,12 @@
+# Normalise line endings in the repository and check out LF everywhere, so a
+# diff never shows a whole file rewritten just because someone is on Windows.
+* text=auto eol=lf
+
+# Binary assets: never let Git try to normalise or merge these.
+*.png binary
+*.ico binary
+*.icns binary
+*.jpg binary
+*.jpeg binary
+*.woff binary
+*.woff2 binary

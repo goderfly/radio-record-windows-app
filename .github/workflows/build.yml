@@ -1,0 +1,109 @@
+name: Build
+
+# The .exe lands on the Actions artifacts page of every run, so a build is
+# always downloadable without waiting for a tag to be cut.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows x64 installer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # electron-builder and the Electron zip are large, stable downloads.
+      # Keyed on the lockfile so a dependency bump refills the cache.
+      - name: Cache Electron downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/AppData/Local/electron/Cache
+            ~/AppData/Local/electron-builder/Cache
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: electron-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: electron-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The committed PNGs are the icons the app ships, so validating them is
+      # a real gate: a missing or malformed one would ship a broken taskbar.
+      - name: Check icons
+        run: node tools/check-icons.mjs
+
+      # Regenerating rasterises the brand mark through Chromium. The runner has
+      # no GPU and no interactive session, which Electron sometimes cannot
+      # start from — and the committed icons are authoritative anyway, so this
+      # must not be able to fail the build.
+      - name: Regenerate icons
+        run: npm run icons
+        continue-on-error: true
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npx electron-vite build
+
+      # NSIS installer plus the portable build; both come out as .exe.
+      - name: Package
+        run: npx electron-builder --win --publish never
+
+      - name: Collect the .exe files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item -Path release\*.exe -Destination dist
+          Get-ChildItem dist | ForEach-Object {
+            "{0}  {1:N1} MB" -f $_.Name, ($_.Length / 1MB)
+          }
+
+      - name: Upload .exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: Record-Mini-${{ github.sha }}
+          path: dist/*.exe
+          if-no-files-found: error
+
+  # Unsigned binaries: SmartScreen will warn on first run until the app is
+  # code-signed and the signature is trusted.
+  release:
+    name: GitHub Release
+    needs: windows
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download the .exe
+        uses: actions/download-artifact@v4
+        with:
+          name: Record-Mini-${{ github.sha }}
+          path: dist
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.exe
+          generate_release_notes: true
