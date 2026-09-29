@@ -1,6 +1,10 @@
 # Record Mini
 
+[![Build](https://github.com/goderfly/record-mini/actions/workflows/build.yml/badge.svg)](https://github.com/goderfly/record-mini/actions/workflows/build.yml)
+
 Десктопный плеер радиостанций [radiorecord.ru](https://radiorecord.ru) на Electron + React + TypeScript.
+
+Готовый `.exe` — в [Artifacts последнего прогона сборки](https://github.com/goderfly/record-mini/actions/workflows/build.yml) (нужен вход в GitHub) или в Releases, если тегнуть `v1.0.0`.
 
 ## Возможности
 

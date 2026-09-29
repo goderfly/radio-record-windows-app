@@ -82,10 +82,13 @@ jobs:
             "{0}  {1:N1} MB" -f $_.Name, ($_.Length / 1MB)
           }
 
+      # A stable name beats one built from the commit: the artifacts list is
+      # browsed by humans, and a full SHA just adds noise. Concurrency already
+      # cancels a superseded run, so the name cannot collide.
       - name: Upload .exe
         uses: actions/upload-artifact@v4
         with:
-          name: Record-Mini-${{ github.sha }}
+          name: Record-Mini-windows-x64
           path: dist/*.exe
           if-no-files-found: error
 
@@ -102,7 +105,7 @@ jobs:
       - name: Download the .exe
         uses: actions/download-artifact@v4
         with:
-          name: Record-Mini-${{ github.sha }}
+          name: Record-Mini-windows-x64
           path: dist
 
       # gh is preinstalled on GitHub runners, so the release needs no
