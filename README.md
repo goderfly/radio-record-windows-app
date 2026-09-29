@@ -9,7 +9,11 @@
 
 ## Скриншоты
 
-![Интерфейс](docs/screenshot-dark.png)
+![Каталог каналов](docs/screenshot-dark.png)
+
+![История эфира](docs/screenshot-history.png)
+
+![Настройки](docs/screenshot-settings.png)
 
 <details>
 <summary>Светлая тема</summary>
@@ -62,23 +66,25 @@ npm run dist       # сборка установщика через electron-bui
 $env:RECORD_MINI_SMOKE="C:\Windows\Temp\rm-smoke"; npm run smoke
 ```
 
-Результат — 52 проверки, файлы `report.json`, `layout.txt` (ASCII-карта панелей), `smoke.png` и `smoke-light.png`.
+Результат — 55 проверок, файлы `report.json`, `layout.txt` (ASCII-карта панелей) и четыре кадра: `smoke.png`, `smoke-light.png`, `smoke-history.png`, `smoke-settings.png`.
 
-`smoke.png` и `smoke-light.png` — те самые кадры, что лежат в `docs/` и показаны в README. После изменения интерфейса перезалить их стоит так:
+Это те самые кадры, что лежат в `docs/` и показаны в README. История эфира и настройки снимаются кликом по тому же элементу, что и у человека: smoke не лезет в стор, а жмёт `.nav-item` и кнопку в подвале меню. После изменения интерфейса перезалить их стоит так:
 
 ```bash
 $env:RECORD_MINI_SMOKE="C:\Windows\Temp\rm-smoke"; npm run smoke
-Copy-Item $env:RECORD_MINI_SMOKE\smoke.png docs\screenshot-dark.png
-Copy-Item $env:RECORD_MINI_SMOKE\smoke-light.png docs\screenshot-light.png
+Copy-Item $env:RECORD_MINI_SMOKE\smoke.png           docs\screenshot-dark.png
+Copy-Item $env:RECORD_MINI_SMOKE\smoke-light.png      docs\screenshot-light.png
+Copy-Item $env:RECORD_MINI_SMOKE\smoke-history.png    docs\screenshot-history.png
+Copy-Item $env:RECORD_MINI_SMOKE\smoke-settings.png   docs\screenshot-settings.png
 ```
 
 Пустой или однотонный кадр проходит проверку размера, поэтому кадр стоит убедить содержимым, а не наличием файла:
 
 ```bash
-node tools/inspect-png.mjs docs\screenshot-dark.png
+node tools/inspect-png.mjs docs\*.png
 ```
 
-Скрипт распаковывает PNG и печатает число различных цветов, долю доминирующего цвета и среднюю яркость: плоский кадр даёт единицы цветов и одну моду. Размер 2240×1402 — это device-пиксели окна на HiDPI, GitHub масштабирует сам.
+Скрипт распаковывает PNG и печатает число различных цветов, долю доминирующего цвета и среднюю яркость: плоский кадр даёт единицы цветов и одну моду. Размер 2288×1448 — это device-пиксели окна на HiDPI, GitHub масштабирует сам.
 
 ## Сборка .exe в CI
 

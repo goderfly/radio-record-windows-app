@@ -1280,6 +1280,80 @@ export async function runSmoke(win: BrowserWindow): Promise<void> {
       `(() => { document.documentElement.dataset.theme = 'dark'; return true; })()`,
     );
 
+    // --- README captures: the history view and the settings dialog ---
+    // Both are reached by clicking what a person would click, not by poking the
+    // store, so the frames show what the interface actually gets you.
+    const clickText = async (selector: string, label: string): Promise<boolean> => {
+      const hit = (await win.webContents.executeJavaScript(`(() => {
+        const el = Array.from(document.querySelectorAll(${JSON.stringify(selector)}))
+          .find((n) => (n.textContent || '').includes(${JSON.stringify(label)}));
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
+      })()`)) as { x: number; y: number } | null;
+      if (!hit) return false;
+      for (const type of ["mouseDown", "mouseUp"] as const) {
+        win.webContents.sendInputEvent({ type, x: hit.x, y: hit.y, button: "left", clickCount: 1 });
+      }
+      await sleep(700);
+      return true;
+    };
+
+    if (await clickText(".nav-item", "История эфира")) {
+      const log = (await win.webContents.executeJavaScript(`(() => {
+        const heading = document.querySelector('.panel__title');
+        const active = document.querySelector('.nav-item--active, .nav-item.is-active');
+        return {
+          heading: (heading?.textContent || '').trim(),
+          active: (active?.textContent || '').trim(),
+          rows: document.querySelectorAll('.track').length,
+        };
+      })()`)) as { heading: string; active: string; rows: number };
+      const historyPng = await capture();
+      writeFileSync(join(outDir, "smoke-history.png"), historyPng);
+      add(
+        "History view screenshot",
+        historyPng.length > 10_000 && log.rows > 5 && log.heading.includes("История"),
+        `smoke-history.png (${(historyPng.length / 1024).toFixed(0)} KB), ` +
+          `heading "${log.heading}", active "${log.active}", ${log.rows} rows`,
+      );
+    } else {
+      add("History view screenshot", false, "no sidebar item for История эфира");
+    }
+
+    // Back to the grid before anything else: the panel map below describes the
+    // channel view, and .station-grid does not exist while the log is open.
+    await clickText(".nav-item", "Каналы");
+
+    if (await clickText(".sidebar__footer .btn", "Настройки")) {
+      // .setting is the row wrapper Setting() renders; counting .row here would
+      // have matched a fraction of the dialog and passed on a nearly empty one.
+      const dialog = (await win.webContents.executeJavaScript(`(() => {
+        const d = document.querySelector('.dialog');
+        return {
+          title: (d?.querySelector('.dialog__title')?.textContent || '').trim(),
+          settings: document.querySelectorAll('.dialog .setting').length,
+          switches: document.querySelectorAll('.dialog .switch, .dialog .segmented').length,
+        };
+      })()`)) as { title: string; settings: number; switches: number };
+      const settingsPng = await capture();
+      writeFileSync(join(outDir, "smoke-settings.png"), settingsPng);
+      add(
+        "Settings dialog screenshot",
+        settingsPng.length > 10_000 && dialog.title === "Настройки" && dialog.settings >= 8,
+        `smoke-settings.png (${(settingsPng.length / 1024).toFixed(0)} KB), ` +
+          `title "${dialog.title}", ${dialog.settings} settings, ${dialog.switches} controls`,
+      );
+      win.webContents.sendInputEvent({ type: "keyDown", keyCode: "Escape" });
+      await sleep(500);
+      const stillOpen = (await win.webContents.executeJavaScript(
+        `!!document.querySelector('.dialog')`,
+      )) as boolean;
+      add("Settings dialog closes on Escape", !stillOpen, stillOpen ? "dialog still open" : "closed");
+    } else {
+      add("Settings dialog screenshot", false, "no Настройки button in the sidebar footer");
+    }
+
     // A coarse ASCII map of the panel boxes, so the report says something about
     // the arrangement even without a human looking at the PNG.
     const map = (await win.webContents.executeJavaScript(`(() => {

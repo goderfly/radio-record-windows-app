@@ -8,8 +8,9 @@
  *
  *   node tools/inspect-png.mjs <file.png> [...]
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { inflateSync } from "node:zlib";
+import { join } from "node:path";
 
 /** PNG colour type -> samples per pixel. Only the types Chromium emits. */
 const CHANNELS = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
@@ -114,4 +115,47 @@ function inspect(file) {
   };
 }
 
-for (const f of process.argv.slice(2)) console.log(inspect(f));
+/**
+ * Expands a shell glob into a sorted file list.
+ *
+ * Done here rather than left to the shell because PowerShell passes a wildcard
+ * through to a native command verbatim, so `node inspect-png.mjs docs\*.png`
+ * arrives as one literal path and dies on ENOENT.
+ */
+function expand(pattern) {
+  const star = Math.max(pattern.lastIndexOf("*"), pattern.lastIndexOf("?"));
+  if (star < 0) return [pattern];
+  // Everything before the first wildcard is the directory to list. It is used
+  // as-is rather than run through dirname(): dirname("docs") is ".", since a
+  // path with no separator has the working directory as its parent, so the
+  // search would silently run against the repo root instead of docs/.
+  const dir = pattern.slice(0, star).replace(/[\\/]+$/, "") || ".";
+  const rx = new RegExp(
+    `^${pattern
+      .slice(star)
+      .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+      .replace(/\*/g, ".*")
+      .replace(/\?/g, ".")}$`,
+    "i",
+  );
+  return readdirSync(dir || ".")
+    .filter((n) => rx.test(n))
+    .sort()
+    .map((n) => join(dir, n));
+}
+
+let bad = 0;
+const files = process.argv.slice(2).flatMap(expand);
+if (files.length === 0) {
+  console.error("no files matched");
+  process.exit(1);
+}
+for (const f of files) {
+  try {
+    console.log(inspect(f));
+  } catch (err) {
+    bad += 1;
+    console.log({ file: f, verdict: `UNREADABLE - ${err.message}` });
+  }
+}
+process.exit(bad ? 1 : 0);
